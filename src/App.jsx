@@ -3,7 +3,18 @@ import { useEffect, useRef, useState } from 'react'
 const STORAGE_KEY = 'talep-portali.talepler'
 const DURUMLAR = ['Açık', 'İşlemde', 'Çözüldü']
 const ONCELIKLER = ['Acil', 'Düşük', 'Orta', 'Yüksek']
+const FILTRE_ONCELIKLERI = ['Düşük', 'Orta', 'Yüksek', 'Acil']
 const BOS_FORM = { baslik: '', talepEden: '', oncelik: 'Orta', aciklama: '' }
+
+function filtreleriOku() {
+  const parametreler = new URLSearchParams(window.location.search)
+  const durum = parametreler.get('durum')
+  const oncelik = parametreler.get('oncelik')
+  return {
+    durum: DURUMLAR.includes(durum) ? durum : '',
+    oncelik: FILTRE_ONCELIKLERI.includes(oncelik) ? oncelik : '',
+  }
+}
 
 function talepleriYukle() {
   try {
@@ -24,7 +35,15 @@ function tarihYaz(iso) {
 export default function App() {
   const [talepler, setTalepler] = useState(talepleriYukle)
   const [form, setForm] = useState(BOS_FORM)
+  const [filtreler, setFiltreler] = useState(filtreleriOku)
   const baslikRef = useRef(null)
+
+  const gorunenTalepler = talepler.filter(
+    (talep) =>
+      (!filtreler.durum || talep.durum === filtreler.durum) &&
+      (!filtreler.oncelik || talep.oncelik === filtreler.oncelik),
+  )
+  const filtreliMi = Boolean(filtreler.durum || filtreler.oncelik)
 
   useEffect(() => {
     try {
@@ -33,6 +52,20 @@ export default function App() {
       // Depolama kapalı veya doluysa sayfa bellekteki veriyle çalışmaya devam eder.
     }
   }, [talepler])
+
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    for (const [ad, deger] of Object.entries(filtreler)) {
+      if (deger) url.searchParams.set(ad, deger)
+      else url.searchParams.delete(ad)
+    }
+    window.history.replaceState(null, '', url)
+  }, [filtreler])
+
+  function filtreGuncelle(event) {
+    const { name, value } = event.target
+    setFiltreler((onceki) => ({ ...onceki, [name]: value }))
+  }
 
   function alanGuncelle(event) {
     const { name, value } = event.target
@@ -114,12 +147,36 @@ export default function App() {
       </form>
 
       <section>
-        <h2>Talepler ({talepler.length})</h2>
+        <h2>
+          Talepler ({filtreliMi ? `${gorunenTalepler.length} / ${talepler.length}` : talepler.length})
+        </h2>
+        <div className="filtreler">
+          <label>
+            Durum
+            <select name="durum" value={filtreler.durum} onChange={filtreGuncelle}>
+              <option value="">Tümü</option>
+              {DURUMLAR.map((durum) => (
+                <option key={durum}>{durum}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Öncelik
+            <select name="oncelik" value={filtreler.oncelik} onChange={filtreGuncelle}>
+              <option value="">Tümü</option>
+              {FILTRE_ONCELIKLERI.map((oncelik) => (
+                <option key={oncelik}>{oncelik}</option>
+              ))}
+            </select>
+          </label>
+        </div>
         {talepler.length === 0 ? (
           <p className="kart bos">Henüz talep yok. İlk talebi yukarıdaki formdan ekleyin.</p>
+        ) : gorunenTalepler.length === 0 ? (
+          <p className="kart bos">Seçili filtrelere uyan talep yok.</p>
         ) : (
           <ul className="liste">
-            {talepler.map((talep) => (
+            {gorunenTalepler.map((talep) => (
               <li key={talep.id} className="kart talep" data-durum={talep.durum} data-oncelik={talep.oncelik}>
                 <div className="talep-icerik">
                   <h3>

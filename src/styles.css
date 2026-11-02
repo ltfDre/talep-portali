@@ -106,6 +106,13 @@ button {
   outline-offset: 1px;
 }
 
+.filtreler {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .liste {
   display: grid;
   gap: 8px;
@@ -176,7 +183,8 @@ button {
 }
 
 @media (max-width: 520px) {
-  .form {
+  .form,
+  .filtreler {
     grid-template-columns: 1fr;
   }
 
