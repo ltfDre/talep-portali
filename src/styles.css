@@ -1,0 +1,187 @@
+:root {
+  color-scheme: light dark;
+  --zemin: light-dark(#f5f6f8, #16181c);
+  --kart: light-dark(#ffffff, #212429);
+  --metin: light-dark(#1c1f24, #eceef1);
+  --soluk: light-dark(#5c636e, #a4abb5);
+  --cizgi: light-dark(#d9dce1, #3a3f47);
+  --vurgu: light-dark(#1d5fbf, #7eb1f5);
+  --vurgu-metin: light-dark(#ffffff, #10151c);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  line-height: 1.45;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--zemin);
+  color: var(--metin);
+}
+
+.sayfa {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+h1 {
+  margin: 0 0 24px;
+  font-size: 1.6rem;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.kart {
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.form h2,
+.genis {
+  grid-column: 1 / -1;
+}
+
+.form h2 {
+  margin: 0;
+}
+
+label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  color: inherit;
+  min-height: 40px;
+  padding: 8px 10px;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: 6px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding-inline: 16px;
+  background: var(--vurgu);
+  border-color: var(--vurgu);
+  color: var(--vurgu-metin);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+:is(input, select, textarea, button):focus-visible {
+  outline: 2px solid var(--vurgu);
+  outline-offset: 1px;
+}
+
+.liste {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.talep {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  border-left-width: 4px;
+}
+
+.talep[data-durum='Açık'] {
+  border-left-color: light-dark(#c2410c, #fb923c);
+}
+
+.talep[data-durum='İşlemde'] {
+  border-left-color: var(--vurgu);
+}
+
+.talep[data-durum='Çözüldü'] {
+  border-left-color: light-dark(#15803d, #4ade80);
+}
+
+.talep[data-oncelik='Acil'] {
+  background: light-dark(#fef2f2, #3b1618);
+  border-top-color: light-dark(#dc2626, #f87171);
+  border-right-color: light-dark(#dc2626, #f87171);
+  border-bottom-color: light-dark(#dc2626, #f87171);
+}
+
+.talep[data-oncelik='Acil'] :is(h3, .numara, .bilgi) {
+  color: light-dark(#b91c1c, #fca5a5);
+}
+
+.talep-icerik {
+  min-width: 0;
+}
+
+.numara,
+.bilgi {
+  color: var(--soluk);
+  font-weight: 400;
+}
+
+.aciklama {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bilgi {
+  margin: 6px 0 0;
+  font-size: 0.8125rem;
+}
+
+.durum {
+  flex: none;
+}
+
+.bos {
+  margin: 0;
+  color: var(--soluk);
+}
+
+@media (max-width: 520px) {
+  .form {
+    grid-template-columns: 1fr;
+  }
+
+  .talep {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
