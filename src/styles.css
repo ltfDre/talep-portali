@@ -148,8 +148,41 @@ button {
   border-bottom-color: light-dark(#dc2626, #f87171);
 }
 
-.talep[data-oncelik='Acil'] :is(h3, .numara, .bilgi) {
+.talep[data-oncelik='Acil'] :is(h1, h3, .numara, .bilgi) {
   color: light-dark(#b91c1c, #fca5a5);
+}
+
+a {
+  color: var(--vurgu);
+}
+
+.talep h3 a {
+  color: inherit;
+}
+
+.geri {
+  margin: 0 0 12px;
+}
+
+.detay-baslik {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.detay-alanlar {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 16px 0 0;
+}
+
+.detay-alanlar dt {
+  color: var(--soluk);
+}
+
+.detay-alanlar dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .talep-icerik {

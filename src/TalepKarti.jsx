@@ -1,18 +1,18 @@
+import { Link, useLocation } from 'react-router-dom'
 import { DURUMLAR } from './sabitler.js'
-
-function tarihYaz(iso) {
-  return new Date(iso).toLocaleString('tr-TR', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  })
-}
+import { tarihYaz } from './tarih.js'
 
 export default function TalepKarti({ talep, onDurumDegistir }) {
+  const { search } = useLocation()
+
   return (
     <li className="kart talep" data-durum={talep.durum} data-oncelik={talep.oncelik}>
       <div className="talep-icerik">
         <h3>
-          <span className="numara">#{talep.id}</span> {talep.baslik}
+          <span className="numara">#{talep.id}</span>{' '}
+          <Link to={`/talepler/${talep.id}`} state={{ listeArama: search }}>
+            {talep.baslik}
+          </Link>
         </h3>
         {talep.aciklama && <p className="aciklama">{talep.aciklama}</p>}
         <p className="bilgi">
