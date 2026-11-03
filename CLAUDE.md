@@ -43,9 +43,14 @@ SPEC Bölüm 3 "Prototipten geçiş" tablosu neyin korunacağını ve neyin kald
 
 Prototip ile SPEC'in ayrıldığı önemli bir nokta: prototipte herkes durumu serbestçe değiştirebilir, SPEC'te ise yalnızca birim üyesi tanımlı geçişleri yapabilir (Bölüm 4, "Durum geçişleri").
 
-## Kurallar
+## Çalışma biçimi
+- Commit mesajları Türkçe ve özlü.
+ Arayüz metinleri ve kod tanımlayıcıları (değişken, işlev, CSS sınıfı) Türkçedir (`talepEkle`, `durumDegistir`, `.kart`); SPEC'teki tablo, alan ve API adları da öyle. Bu dili sürdürün.
+- Git'e commit atma, dal açma, push yapma. Değişiklikten sonra dur, neyi
+  değiştirdiğini ve nasıl doğrulayacağımı söyle; commit'i ben atarım.
+- Plandaki her adım bitince dur ve ben "devam" diyene kadar bekle.
 
-- Arayüz metinleri ve kod tanımlayıcıları (değişken, işlev, CSS sınıfı) Türkçedir (`talepEkle`, `durumDegistir`, `.kart`); SPEC'teki tablo, alan ve API adları da öyle. Bu dili sürdürün.
+## Kurallar
 - Proje JavaScript kullanır. TypeScript, Next.js ve ORM SPEC Bölüm 2'de gerekçesiyle elenmiştir; bu seçimleri değiştirmeden önce kullanıcıya danışın.
 - Öncelik değerleri: Düşük, Orta, Yüksek, Acil (değiştirme).
 - Talep durumları: Açık, İşlemde, Çözüldü (docs/SPEC.md'ye uygun).
