@@ -13,7 +13,7 @@ function filtreleriOku(parametreler) {
   }
 }
 
-export default function ListeSayfasi({ talepler, onEkle, onDurumDegistir }) {
+export default function ListeSayfasi({ talepler, onEkle }) {
   const [parametreler, setParametreler] = useSearchParams()
   const filtreler = filtreleriOku(parametreler)
 
@@ -58,7 +58,7 @@ export default function ListeSayfasi({ talepler, onEkle, onDurumDegistir }) {
         ) : (
           <ul className="liste">
             {gorunenTalepler.map((talep) => (
-              <TalepKarti key={talep.id} talep={talep} onDurumDegistir={onDurumDegistir} />
+              <TalepKarti key={talep.id} talep={talep} />
             ))}
           </ul>
         )}

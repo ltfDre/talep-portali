@@ -185,6 +185,13 @@ a {
   overflow-wrap: anywhere;
 }
 
+.durum-dugmeleri {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 .talep-icerik {
   min-width: 0;
 }

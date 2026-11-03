@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import Bulunamadi from './Bulunamadi.jsx'
+import { durumGecir } from './durumGecisleri.js'
 import ListeSayfasi from './ListeSayfasi.jsx'
 import { DURUMLAR } from './sabitler.js'
 import TalepDetayi from './TalepDetayi.jsx'
@@ -40,8 +41,11 @@ export default function App() {
   }
 
   function durumDegistir(id, durum) {
+    const zaman = new Date().toISOString()
     setTalepler((onceki) =>
-      onceki.map((talep) => (talep.id === id ? { ...talep, durum } : talep)),
+      onceki.map((talep) =>
+        talep.id === id ? (durumGecir(talep, durum, zaman) ?? talep) : talep,
+      ),
     )
   }
 
@@ -50,15 +54,12 @@ export default function App() {
       <Routes>
         <Route
           path="/"
-          element={
-            <ListeSayfasi
-              talepler={talepler}
-              onEkle={talepEkle}
-              onDurumDegistir={durumDegistir}
-            />
-          }
+          element={<ListeSayfasi talepler={talepler} onEkle={talepEkle} />}
         />
-        <Route path="/talepler/:id" element={<TalepDetayi talepler={talepler} />} />
+        <Route
+          path="/talepler/:id"
+          element={<TalepDetayi talepler={talepler} onDurumDegistir={durumDegistir} />}
+        />
         <Route path="*" element={<Bulunamadi />} />
       </Routes>
     </main>
