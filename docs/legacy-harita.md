@@ -116,7 +116,7 @@ Dosyada `import` yoktur.
 | G5 | 401-403 | Yüksek | DELETE aynı biçimde kurulur, yetki denetimi yoktur | Okuma |
 | G6 | 290 | Orta | CSV kaçışı yok: virgül ve satır sonu sütunları kaydırır, `=` ile başlayan başlık Excel'de formül olarak çalışabilir. Çıktının muhasebeye gitmesi (satır 4) riski artırır | Denendi |
 | G7 | 1-431 | Orta | Yetki denetimi yok. Sunucuda kullanılırsa R1 nedeniyle bir kullanıcı başka birimin raporunu alabilir | Okuma |
-| G8 | 210-213, ihlal sayaçları (227, 235) | Yüksek | Prototype pollution: `birim: "constructor"` ve `"__proto__"` değerleri `birimler` nesnesi üzerinden global `Object`'e ve `Object.prototype`'a yazar | `constructor` denendi: `Object.toplam` `NaN` oldu; `__proto__` okuma, denenmedi |
+| G8 | 210-213, ihlal sayaçları (227, 235) | Yüksek | Prototype pollution: `birim: "constructor"` ve `"__proto__"` değerleri `birimler` nesnesi üzerinden global `Object`'e ve `Object.prototype`'a yazar | `constructor` denendi: `Object.toplam` `NaN` oldu; `__proto__` denendi: `Object.prototype.toplam` ve `.ihlal` `NaN` oluyor, birim `birimler` içinde görünmüyor. Kişi adı olarak `__proto__` kirletmiyor ama kişi sayımdan düşüyor |
 
 ### Veri koruma (KVKK)
 
