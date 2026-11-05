@@ -16,14 +16,14 @@ const YONETICI_MAIL = "bt.mudur@sirket.local";
 const SAAT = 3600000;
 const GUN = 86400000;
 
-const H_ACIL_ILK = 1;
-const H_ACIL_COZ = 4;
-const H_YUKSEK_ILK = 4;
-const H_YUKSEK_COZ = 24;
-const H_ORTA_ILK = 8;
-const H_ORTA_COZ = 72;
-const H_DUSUK_ILK = 24;
-const H_DUSUK_COZ = 120;
+// SLA esikleri, saat cinsinden (ilk: ilk yanit, coz: cozum).
+// dusuk.coz su an okunmuyor; Dusuk cozum blogu orta.coz kullaniyor (harita R3).
+const SLA_SAAT = {
+  acil: { ilk: 1, coz: 4 },
+  yuksek: { ilk: 4, coz: 24 },
+  orta: { ilk: 8, coz: 72 },
+  dusuk: { ilk: 24, coz: 120 },
+};
 
 // ---- global durum ----
 var _onbellek = null;
@@ -207,7 +207,7 @@ export function rapor_uret(t, bas, bit, birim, o) {
       if (ilk != null) {
         acil_toplam_ilk = acil_toplam_ilk + ilk;
         acil_ilk_say++;
-        if (ilk > H_ACIL_ILK) {
+        if (ilk > SLA_SAAT.acil.ilk) {
           acil_ihlal++;
           birimler[bn].ihlal++;
         }
@@ -215,7 +215,7 @@ export function rapor_uret(t, bas, bit, birim, o) {
       if (coz != null) {
         acil_toplam_coz = acil_toplam_coz + coz;
         acil_coz_say++;
-        if (coz > H_ACIL_COZ) {
+        if (coz > SLA_SAAT.acil.coz) {
           acil_ihlal++;
           birimler[bn].ihlal++;
         }
@@ -225,7 +225,7 @@ export function rapor_uret(t, bas, bit, birim, o) {
       if (ilk != null) {
         yuksek_toplam_ilk = yuksek_toplam_ilk + ilk;
         yuksek_ilk_say++;
-        if (ilk > H_YUKSEK_ILK) {
+        if (ilk > SLA_SAAT.yuksek.ilk) {
           yuksek_ihlal++;
           birimler[bn].ihlal++;
         }
@@ -233,7 +233,7 @@ export function rapor_uret(t, bas, bit, birim, o) {
       if (coz != null) {
         yuksek_toplam_coz = yuksek_toplam_coz + coz;
         yuksek_coz_say++;
-        if (coz > H_YUKSEK_COZ) {
+        if (coz > SLA_SAAT.yuksek.coz) {
           yuksek_ihlal++;
           birimler[bn].ihlal++;
         }
@@ -243,7 +243,7 @@ export function rapor_uret(t, bas, bit, birim, o) {
       if (ilk != null) {
         orta_toplam_ilk = orta_toplam_ilk + ilk;
         orta_ilk_say++;
-        if (ilk >= H_ORTA_ILK) {
+        if (ilk >= SLA_SAAT.orta.ilk) {
           orta_ihlal++;
           birimler[bn].ihlal++;
         }
@@ -251,7 +251,7 @@ export function rapor_uret(t, bas, bit, birim, o) {
       if (coz != null) {
         orta_toplam_coz = orta_toplam_coz + coz;
         orta_coz_say++;
-        if (coz > H_ORTA_COZ) {
+        if (coz > SLA_SAAT.orta.coz) {
           orta_ihlal++;
           birimler[bn].ihlal++;
         }
@@ -261,7 +261,7 @@ export function rapor_uret(t, bas, bit, birim, o) {
       if (ilk != null) {
         dusuk_toplam_ilk = dusuk_toplam_ilk + ilk;
         dusuk_ilk_say++;
-        if (ilk > H_DUSUK_ILK) {
+        if (ilk > SLA_SAAT.dusuk.ilk) {
           dusuk_ihlal++;
           birimler[bn].ihlal++;
         }
@@ -269,7 +269,7 @@ export function rapor_uret(t, bas, bit, birim, o) {
       if (coz != null) {
         dusuk_toplam_coz = dusuk_toplam_coz + coz;
         dusuk_coz_say++;
-        if (coz > H_ORTA_COZ) {
+        if (coz > SLA_SAAT.orta.coz) {
           dusuk_ihlal++;
           birimler[bn].ihlal++;
         }
