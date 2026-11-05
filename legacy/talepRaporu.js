@@ -17,13 +17,53 @@ const SAAT = 3600000;
 const GUN = 86400000;
 
 // SLA esikleri, saat cinsinden (ilk: ilk yanit, coz: cozum).
-// dusuk.coz su an okunmuyor; Dusuk cozum blogu orta.coz kullaniyor (harita R3).
+// dusuk.coz su an okunmuyor; Dusuk cozum kurali orta.coz kullaniyor (harita R3).
 const SLA_SAAT = {
   acil: { ilk: 1, coz: 4 },
   yuksek: { ilk: 4, coz: 24 },
   orta: { ilk: 8, coz: 72 },
   dusuk: { ilk: 24, coz: 120 },
 };
+
+// Oncelik kurallari. Anahtarlar oncelikNormal'in dondurdugu dort degerdir.
+const ONCELIK_KURALLARI = {
+  Acil: {
+    anahtar: "acil",
+    ilkIhlal: (sure) => sure > SLA_SAAT.acil.ilk,
+    cozIhlal: (sure) => sure > SLA_SAAT.acil.coz,
+  },
+  Yüksek: {
+    anahtar: "yuksek",
+    ilkIhlal: (sure) => sure > SLA_SAAT.yuksek.ilk,
+    cozIhlal: (sure) => sure > SLA_SAAT.yuksek.coz,
+  },
+  Orta: {
+    anahtar: "orta",
+    // bilinen tutarsızlık (harita R13): digerleri > kullanir, burada >= korunuyor.
+    ilkIhlal: (sure) => sure >= SLA_SAAT.orta.ilk,
+    cozIhlal: (sure) => sure > SLA_SAAT.orta.coz,
+  },
+  Düşük: {
+    anahtar: "dusuk",
+    ilkIhlal: (sure) => sure > SLA_SAAT.dusuk.ilk,
+    // bilinen tutarsızlık (harita R3): dusuk.coz degil orta.coz ile karsilastiriliyor.
+    cozIhlal: (sure) => sure > SLA_SAAT.orta.coz,
+  },
+};
+
+function yeniSayac() {
+  return { say: 0, ihlal: 0, toplamIlk: 0, toplamCoz: 0, ilkSay: 0, cozSay: 0 };
+}
+
+function oncelikOzeti(s) {
+  return {
+    toplam: s.say,
+    ihlal: s.ihlal,
+    ortIlk: s.toplamIlk / s.say,
+    ortCoz: s.toplamCoz / s.say,
+    yuzde: ((s.ihlal / s.say) * 100).toFixed(1),
+  };
+}
 
 // ---- global durum ----
 var _onbellek = null;
@@ -144,33 +184,7 @@ export function rapor_uret(t, bas, bit, birim, o) {
   }
 
   // sayaclar
-  var acil_say = 0;
-  var acil_ihlal = 0;
-  var acil_toplam_ilk = 0;
-  var acil_toplam_coz = 0;
-  var acil_ilk_say = 0;
-  var acil_coz_say = 0;
-
-  var yuksek_say = 0;
-  var yuksek_ihlal = 0;
-  var yuksek_toplam_ilk = 0;
-  var yuksek_toplam_coz = 0;
-  var yuksek_ilk_say = 0;
-  var yuksek_coz_say = 0;
-
-  var orta_say = 0;
-  var orta_ihlal = 0;
-  var orta_toplam_ilk = 0;
-  var orta_toplam_coz = 0;
-  var orta_ilk_say = 0;
-  var orta_coz_say = 0;
-
-  var dusuk_say = 0;
-  var dusuk_ihlal = 0;
-  var dusuk_toplam_ilk = 0;
-  var dusuk_toplam_coz = 0;
-  var dusuk_ilk_say = 0;
-  var dusuk_coz_say = 0;
+  var oncelikSayaclari = { acil: yeniSayac(), yuksek: yeniSayac(), orta: yeniSayac(), dusuk: yeniSayac() };
 
   var acik = 0;
   var islemde = 0;
@@ -202,77 +216,23 @@ export function rapor_uret(t, bas, bit, birim, o) {
     if (kisiler[kisi] == undefined) kisiler[kisi] = 0;
     kisiler[kisi]++;
 
-    if (onc == "Acil") {
-      acil_say++;
-      if (ilk != null) {
-        acil_toplam_ilk = acil_toplam_ilk + ilk;
-        acil_ilk_say++;
-        if (ilk > SLA_SAAT.acil.ilk) {
-          acil_ihlal++;
-          birimler[bn].ihlal++;
-        }
+    var kural = ONCELIK_KURALLARI[onc];
+    var oncSayac = oncelikSayaclari[kural.anahtar];
+    oncSayac.say++;
+    if (ilk != null) {
+      oncSayac.toplamIlk = oncSayac.toplamIlk + ilk;
+      oncSayac.ilkSay++;
+      if (kural.ilkIhlal(ilk)) {
+        oncSayac.ihlal++;
+        birimler[bn].ihlal++;
       }
-      if (coz != null) {
-        acil_toplam_coz = acil_toplam_coz + coz;
-        acil_coz_say++;
-        if (coz > SLA_SAAT.acil.coz) {
-          acil_ihlal++;
-          birimler[bn].ihlal++;
-        }
-      }
-    } else if (onc == "Yüksek") {
-      yuksek_say++;
-      if (ilk != null) {
-        yuksek_toplam_ilk = yuksek_toplam_ilk + ilk;
-        yuksek_ilk_say++;
-        if (ilk > SLA_SAAT.yuksek.ilk) {
-          yuksek_ihlal++;
-          birimler[bn].ihlal++;
-        }
-      }
-      if (coz != null) {
-        yuksek_toplam_coz = yuksek_toplam_coz + coz;
-        yuksek_coz_say++;
-        if (coz > SLA_SAAT.yuksek.coz) {
-          yuksek_ihlal++;
-          birimler[bn].ihlal++;
-        }
-      }
-    } else if (onc == "Orta") {
-      orta_say++;
-      if (ilk != null) {
-        orta_toplam_ilk = orta_toplam_ilk + ilk;
-        orta_ilk_say++;
-        if (ilk >= SLA_SAAT.orta.ilk) {
-          orta_ihlal++;
-          birimler[bn].ihlal++;
-        }
-      }
-      if (coz != null) {
-        orta_toplam_coz = orta_toplam_coz + coz;
-        orta_coz_say++;
-        if (coz > SLA_SAAT.orta.coz) {
-          orta_ihlal++;
-          birimler[bn].ihlal++;
-        }
-      }
-    } else if (onc == "Düşük") {
-      dusuk_say++;
-      if (ilk != null) {
-        dusuk_toplam_ilk = dusuk_toplam_ilk + ilk;
-        dusuk_ilk_say++;
-        if (ilk > SLA_SAAT.dusuk.ilk) {
-          dusuk_ihlal++;
-          birimler[bn].ihlal++;
-        }
-      }
-      if (coz != null) {
-        dusuk_toplam_coz = dusuk_toplam_coz + coz;
-        dusuk_coz_say++;
-        if (coz > SLA_SAAT.orta.coz) {
-          dusuk_ihlal++;
-          birimler[bn].ihlal++;
-        }
+    }
+    if (coz != null) {
+      oncSayac.toplamCoz = oncSayac.toplamCoz + coz;
+      oncSayac.cozSay++;
+      if (kural.cozIhlal(coz)) {
+        oncSayac.ihlal++;
+        birimler[bn].ihlal++;
       }
     }
   }
@@ -289,34 +249,10 @@ export function rapor_uret(t, bas, bit, birim, o) {
     acik: acik,
     islemde: islemde,
     cozuldu: cozuldu,
-    acil: {
-      toplam: acil_say,
-      ihlal: acil_ihlal,
-      ortIlk: acil_toplam_ilk / acil_say,
-      ortCoz: acil_toplam_coz / acil_say,
-      yuzde: ((acil_ihlal / acil_say) * 100).toFixed(1),
-    },
-    yuksek: {
-      toplam: yuksek_say,
-      ihlal: yuksek_ihlal,
-      ortIlk: yuksek_toplam_ilk / yuksek_say,
-      ortCoz: yuksek_toplam_coz / yuksek_say,
-      yuzde: ((yuksek_ihlal / yuksek_say) * 100).toFixed(1),
-    },
-    orta: {
-      toplam: orta_say,
-      ihlal: orta_ihlal,
-      ortIlk: orta_toplam_ilk / orta_say,
-      ortCoz: orta_toplam_coz / orta_say,
-      yuzde: ((orta_ihlal / orta_say) * 100).toFixed(1),
-    },
-    dusuk: {
-      toplam: dusuk_say,
-      ihlal: dusuk_ihlal,
-      ortIlk: dusuk_toplam_ilk / dusuk_say,
-      ortCoz: dusuk_toplam_coz / dusuk_say,
-      yuzde: ((dusuk_ihlal / dusuk_say) * 100).toFixed(1),
-    },
+    acil: oncelikOzeti(oncelikSayaclari.acil),
+    yuksek: oncelikOzeti(oncelikSayaclari.yuksek),
+    orta: oncelikOzeti(oncelikSayaclari.orta),
+    dusuk: oncelikOzeti(oncelikSayaclari.dusuk),
     birimler: birimler,
     kisiler: kisiler,
     aylik: aylikDagilim(liste),
@@ -324,7 +260,11 @@ export function rapor_uret(t, bas, bit, birim, o) {
     olusturan: o.kullanici,
   };
 
-  var toplam_ihlal = acil_ihlal + yuksek_ihlal + orta_ihlal + dusuk_ihlal;
+  var toplam_ihlal =
+    oncelikSayaclari.acil.ihlal +
+    oncelikSayaclari.yuksek.ihlal +
+    oncelikSayaclari.orta.ihlal +
+    oncelikSayaclari.dusuk.ihlal;
   r.ihlalToplam = toplam_ihlal;
   r.ihlalYuzde = Math.round((toplam_ihlal / liste.length) * 100);
 
