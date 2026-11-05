@@ -79,7 +79,7 @@ Dosyada `import` yoktur.
 | No | Satır | Önem | Bulgu | Kanıt |
 |---|---|---|---|---|
 | R1 | 120-123, 340 | Yüksek | Önbellek anahtarı yalnızca liste uzunluğu. Tarih, birim ve veri değişse de eski sonuç döner; başka birimin raporu da dönebilir | Denendi: IK istendi, BT raporu döndü |
-| R3 | 272 (26) | Yüksek | Düşük öncelik çözüm eşiği yanlışlıkla `H_ORTA_COZ` (72 saat); `H_DUSUK_COZ` (120) hiç kullanılmıyor | Denendi: 96 saatlik çözüm ihlal sayıldı |
+| R3 | 272 (25) | Yüksek | Düşük öncelik çözüm eşiği yanlışlıkla `SLA_SAAT.orta.coz` (72 saat); `SLA_SAAT.dusuk.coz` (120) hiç kullanılmıyor | Denendi: 96 saatlik çözüm ihlal sayıldı |
 | R4 | 207, 215 (ve diğer dallar) | Yüksek | Yanıtlanmamış veya çözülmemiş talep ihlal sayılmaz, çünkü yalnızca tarihi dolu olanlar denetlenir. En çok geciken talepler rapora ihlal olarak girmez | Denendi: yanıtsız Acil talepte ihlal 0 |
 | R5 | 48-53 | Yüksek | `new Date(null)` geçerli tarih (1970) sayılır. `null` tarih `null` süre yerine çok büyük negatif süre verir, ortalamayı bozar. Bu portal yeniden açmada `cozulmeTarihi: null` yazıyor (`src/durumGecisleri.js`) | Denendi: `ortCoz` = -492536 saat |
 | R6 | 295-296 (302-303, 309-310, 316-317) | Yüksek | Ortalamalar tarihi dolu talep sayısına değil tüm talep sayısına bölünür. `*_ilk_say`, `*_coz_say` sayılır ama hiç okunmaz (151-152 vb.) | Denendi: tek yanıtlı 4 saat, ortalama 2 saat |
@@ -132,7 +132,7 @@ Dosyada `import` yoktur.
 
 ## Ölü kod
 
-- `gunFarki` (56-58), `tmp2` (487-489), `H_DUSUK_COZ` (26)
+- `gunFarki` (56-58), `tmp2` (487-489), `SLA_SAAT.dusuk.coz` (25)
 - `sonuc_global` (31, 339), `son_birim` (32, 125)
 - `*_ilk_say`, `*_coz_say` (151-152, 158-159, 165-166, 172-173)
 - Yorumdaki eski hesap (280-282), `rapor_v1` (476-485; "silmeyin" notu var)
