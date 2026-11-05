@@ -34,5 +34,5 @@ SPEC Bölüm 3 "Prototipten geçiş" tablosu belirler. **Korunur:** Vite + React
 - Öncelik değerleri: Düşük, Orta, Yüksek, Acil (değiştirme).
 - Talep durumları: Açık, İşlemde, Çözüldü (docs/SPEC.md'ye uygun).
 - `.env` dosyasını asla okuma, yazma veya commit etme.
-- Yeni kütüphane eklemeden önce sor.
+- Yeni kütüphane eklemeden önce sor. Onaylı paketler: çalışma zamanı `react`, `react-dom`, `react-router-dom`, `express`, `better-sqlite3`, `zod`; geliştirme `vite`, `@vitejs/plugin-react`, `concurrently`. SPEC Bölüm 2'de adı geçmesi tek başına onay sayılmaz; listede olmayan her paket için sor.
 - Büyük değişiklikten önce plan sun, onay bekle.
