@@ -1,11 +1,21 @@
 import { Router } from 'express'
+// Geçiş kuralları arayüzle tek kaynaktan gelir (SPEC Bölüm 4, CLAUDE.md "Kurallar").
+import { durumGecir } from '../../src/durumGecisleri.js'
 import {
   SAYFA_BOYUTU,
+  durumDegistirSemasi,
   talepIdSemasi,
   talepListesiSemasi,
   yeniTalepSemasi,
 } from '../dogrulama/talepler.js'
-import { ApiHatasi, bulunamadi, dogrulamaHatasi } from '../hatalar.js'
+import {
+  ApiHatasi,
+  bulunamadi,
+  cakisma,
+  dogrulamaHatasi,
+  gecersizGecis,
+  yetkiYok,
+} from '../hatalar.js'
 import { GELISTIRME_OID } from '../tohum.js'
 import { db } from '../veritabani.js'
 
@@ -64,6 +74,23 @@ const sorgular = {
   gecmiseEkle: db.prepare(`
     INSERT INTO talep_gecmisi (talep_id, kullanici_id, olay, eski_deger, yeni_deger, olusturma)
     VALUES (?, ?, 'acildi', NULL, 'Açık', ?)`),
+  // Görünürlük koşulu detay sorgusuyla aynıdır; üyelik ayrıca döner (403 ile 404'ü ayırmak için).
+  durumIcinTalep: db.prepare(`
+    SELECT * FROM (
+      SELECT t.id, t.durum, t.surum, t.ilk_yanit_tarihi, t.cozulme_tarihi, t.acan_kullanici_id,
+             EXISTS (SELECT 1 FROM birim_uyeleri bu
+                     WHERE bu.birim_id = t.birim_id AND bu.kullanici_id = ?) AS uye
+      FROM talepler t
+      WHERE t.id = ?
+    )
+    WHERE acan_kullanici_id = ? OR uye = 1`),
+  durumGuncelle: db.prepare(`
+    UPDATE talepler
+    SET durum = ?, ilk_yanit_tarihi = ?, cozulme_tarihi = ?, guncelleme = ?, surum = surum + 1
+    WHERE id = ? AND surum = ?`),
+  durumGecmiseEkle: db.prepare(`
+    INSERT INTO talep_gecmisi (talep_id, kullanici_id, olay, eski_deger, yeni_deger, olusturma)
+    VALUES (?, ?, 'durum_degisti', ?, ?, ?)`),
 }
 
 // Giriş yazılana kadar geçerli kullanıcı tohumdaki geliştirme kullanıcısıdır.
@@ -143,6 +170,43 @@ const talepAc = db.transaction((kullaniciId, { baslik, aciklama, kategori_id, on
   return talepDetayi(talepId, kullaniciId)
 })
 
+// SPEC Bölüm 4 "Durum geçişleri" ve Bölüm 7: yalnızca talebin birim üyesi değiştirir.
+// Denetim sırası: görünürlük (404) → üyelik (403) → sürüm (409 CAKISMA) → geçiş (409).
+// Sürüm geçişten önce denetlenir: eski veriyle verilen karar yeniden yüklemeyi gerektirir.
+const durumDegistir = db.transaction((kullaniciId, talepId, { durum, surum }) => {
+  const satir = sorgular.durumIcinTalep.get(kullaniciId, talepId, kullaniciId)
+  if (!satir) throw bulunamadi()
+  if (!satir.uye) throw yetkiYok()
+  if (satir.surum !== surum) throw cakisma()
+
+  const zaman = new Date().toISOString()
+  const yeni = durumGecir(
+    {
+      durum: satir.durum,
+      ilkYanitTarihi: satir.ilk_yanit_tarihi,
+      cozulmeTarihi: satir.cozulme_tarihi,
+    },
+    durum,
+    zaman,
+    // SPEC Bölüm 4 "İlk yanıt": talebi açanın kendi işlemi süreyi başlatmaz.
+    { ilkYanitSayilir: kullaniciId !== satir.acan_kullanici_id },
+  )
+  if (!yeni) throw gecersizGecis(satir.durum, durum)
+
+  const { changes } = sorgular.durumGuncelle.run(
+    yeni.durum,
+    yeni.ilkYanitTarihi,
+    yeni.cozulmeTarihi,
+    zaman,
+    talepId,
+    surum,
+  )
+  if (changes !== 1) throw cakisma()
+
+  sorgular.durumGecmiseEkle.run(talepId, kullaniciId, satir.durum, yeni.durum, zaman)
+  return talepDetayi(talepId, kullaniciId)
+})
+
 talepRotalari.get('/', (req, res) => {
   const sorgu = dogrula(talepListesiSemasi, req.query)
   res.json(talepListesiGetir(geciciKullaniciId(), sorgu))
@@ -159,4 +223,11 @@ talepRotalari.post('/', (req, res) => {
   const girdi = dogrula(yeniTalepSemasi, req.body)
   const detay = talepAc(geciciKullaniciId(), girdi)
   res.status(201).location(`/api/talepler/${detay.talep.id}`).json(detay)
+})
+
+talepRotalari.patch('/:id/durum', (req, res) => {
+  const { id } = dogrula(talepIdSemasi, req.params)
+  const girdi = dogrula(durumDegistirSemasi, req.body)
+  // immediate: yazma kilidi okumadan önce alınır; okuma ile UPDATE arasına başka bağlantı giremez.
+  res.json(durumDegistir.immediate(geciciKullaniciId(), id, girdi))
 })

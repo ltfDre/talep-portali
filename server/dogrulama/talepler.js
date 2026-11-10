@@ -61,6 +61,14 @@ export const talepListesiSemasi = z.object({
   ).default(1),
 })
 
+// Gövde JSON nesnesi değilse (dizi, sayı, null…) alan hatası yerine genel mesaj.
+const GOVDE_SECENEKLERI = {
+  error: (sorun) =>
+    sorun.code === 'invalid_type' ? 'İstek gövdesi bir JSON nesnesi olmalı.' : undefined,
+}
+
+const SURUM_MESAJI = 'Sürüm 1 veya daha büyük bir tamsayı olmalı.'
+
 // Bilinmeyen alanlar (durum, birim_id, acan_kullanici_id, surum…) reddedilir.
 export const yeniTalepSemasi = z.strictObject(
   {
@@ -74,8 +82,18 @@ export const yeniTalepSemasi = z.strictObject(
       .positive({ error: 'Kategori seçilmeli.' }),
     oncelik: secenek(ONCELIKLER, ONCELIK_MESAJI),
   },
+  GOVDE_SECENEKLERI,
+)
+
+// Tarihler ve diğer alanlar sunucuda hesaplanır; gövdede yalnızca bu ikisi kabul edilir.
+export const durumDegistirSemasi = z.strictObject(
   {
-    error: (sorun) =>
-      sorun.code === 'invalid_type' ? 'İstek gövdesi bir JSON nesnesi olmalı.' : undefined,
+    durum: secenek(DURUMLAR, DURUM_MESAJI),
+    surum: z
+      .number({ error: SURUM_MESAJI })
+      .int({ error: SURUM_MESAJI })
+      .positive({ error: SURUM_MESAJI })
+      .max(Number.MAX_SAFE_INTEGER, { error: SURUM_MESAJI }),
   },
+  GOVDE_SECENEKLERI,
 )

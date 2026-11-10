@@ -14,6 +14,26 @@ export function bulunamadi() {
   return new ApiHatasi(404, 'BULUNAMADI', 'Aradığınız kayıt bulunamadı.')
 }
 
+export function yetkiYok() {
+  return new ApiHatasi(403, 'YETKI_YOK', 'Bu işlem için yetkiniz yok.')
+}
+
+export function cakisma() {
+  return new ApiHatasi(
+    409,
+    'CAKISMA',
+    'Talep siz bakarken güncellendi. Lütfen sayfayı yenileyip yeniden deneyin.',
+  )
+}
+
+export function gecersizGecis(eskiDurum, yeniDurum) {
+  return new ApiHatasi(
+    409,
+    'GECERSIZ_GECIS',
+    `'${eskiDurum}' durumundan '${yeniDurum}' durumuna geçilemez.`,
+  )
+}
+
 // Zod hatasını 400 DOGRULAMA'ya çevirir; her alan için ilk sorun yazılır.
 export function dogrulamaHatasi(zodHatasi) {
   const alanlar = {}
