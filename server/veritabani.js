@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import Database from 'better-sqlite3'
+import { ayarlar } from './ayarlar.js'
 import { tohumla } from './tohum.js'
 
 const SUNUCU_KLASORU = path.dirname(fileURLToPath(import.meta.url))
@@ -15,7 +16,7 @@ function veritabaniAc(yol) {
   return new Database(tamYol)
 }
 
-export const db = veritabaniAc(process.env.VERITABANI_YOLU ?? 'veri/talep.db')
+export const db = veritabaniAc(ayarlar.veritabaniYolu)
 
 // SPEC Bölüm 3.
 db.pragma('journal_mode = WAL')
