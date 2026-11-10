@@ -14,6 +14,29 @@ export function bulunamadi() {
   return new ApiHatasi(404, 'BULUNAMADI', 'Aradığınız kayıt bulunamadı.')
 }
 
+// Zod hatasını 400 DOGRULAMA'ya çevirir; her alan için ilk sorun yazılır.
+export function dogrulamaHatasi(zodHatasi) {
+  const alanlar = {}
+  let genelMesaj
+
+  for (const sorun of zodHatasi.issues) {
+    if (sorun.code === 'unrecognized_keys') {
+      for (const anahtar of sorun.keys) alanlar[anahtar] ??= 'Bu alan kabul edilmiyor.'
+    } else if (sorun.path.length === 0) {
+      genelMesaj ??= sorun.message
+    } else {
+      alanlar[sorun.path.join('.')] ??= sorun.message
+    }
+  }
+
+  const adlar = Object.keys(alanlar)
+  if (adlar.length === 0) {
+    return new ApiHatasi(400, 'DOGRULAMA', genelMesaj ?? 'İstek geçersiz.')
+  }
+  const onEk = adlar.length === 1 ? 'Geçersiz alan' : 'Geçersiz alanlar'
+  return new ApiHatasi(400, 'DOGRULAMA', `${onEk}: ${adlar.join(', ')}.`, alanlar)
+}
+
 function hataGovdesi(kod, mesaj, ekAlanlar) {
   return { hata: { kod, mesaj, ...ekAlanlar } }
 }

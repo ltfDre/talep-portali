@@ -1,5 +1,6 @@
 import express from 'express'
 import { ApiHatasi, bulunamadi, hataAraKatmani } from './hatalar.js'
+import { talepRotalari } from './rotalar/talepler.js'
 import { db } from './veritabani.js'
 
 export const uygulama = express()
@@ -16,6 +17,8 @@ uygulama.get('/api/saglik', (req, res) => {
   }
   res.json({ durum: 'ok' })
 })
+
+uygulama.use('/api/talepler', talepRotalari)
 
 uygulama.use('/api', () => {
   throw bulunamadi()
