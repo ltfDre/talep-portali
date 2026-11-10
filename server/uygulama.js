@@ -1,5 +1,6 @@
 import express from 'express'
 import { ApiHatasi, bulunamadi, hataAraKatmani } from './hatalar.js'
+import { kategoriRotalari } from './rotalar/kategoriler.js'
 import { talepRotalari } from './rotalar/talepler.js'
 import { db } from './veritabani.js'
 
@@ -18,6 +19,7 @@ uygulama.get('/api/saglik', (req, res) => {
   res.json({ durum: 'ok' })
 })
 
+uygulama.use('/api/kategoriler', kategoriRotalari)
 uygulama.use('/api/talepler', talepRotalari)
 
 uygulama.use('/api', () => {
