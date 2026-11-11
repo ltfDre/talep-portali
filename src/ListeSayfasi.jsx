@@ -4,6 +4,7 @@ import { talepleriGetir } from './api.js'
 import HataKutusu from './HataKutusu.jsx'
 import { DURUMLAR, FILTRE_ONCELIKLERI } from './sabitler.js'
 import TalepFiltreleri from './TalepFiltreleri.jsx'
+import TalepFormu from './TalepFormu.jsx'
 import TalepKarti from './TalepKarti.jsx'
 
 function filtreleriOku(parametreler) {
@@ -71,7 +72,9 @@ export default function ListeSayfasi() {
   } else if (sonuc.talepler.length === 0) {
     icerik = (
       <p className="kart bos">
-        {filtreliMi ? 'Seçili filtrelere uyan talep yok.' : 'Henüz talep yok.'}
+        {filtreliMi
+          ? 'Seçili filtrelere uyan talep yok.'
+          : 'Henüz talep yok. İlk talebi yukarıdaki formdan açın.'}
       </p>
     )
   } else {
@@ -95,6 +98,8 @@ export default function ListeSayfasi() {
   return (
     <>
       <h1>IT Destek Talepleri</h1>
+
+      <TalepFormu />
 
       <section>
         <h2>Talepler{sonuc ? ` (${sonuc.toplamKayit})` : ''}</h2>

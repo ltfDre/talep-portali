@@ -101,6 +101,44 @@ button {
   cursor: pointer;
 }
 
+button:disabled,
+select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.alan {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+.alan > p {
+  margin: 0;
+}
+
+.sayac {
+  justify-self: end;
+}
+
+.alan-hatasi {
+  font-size: 0.8125rem;
+  color: light-dark(#b71c1c, #ffcdd2);
+}
+
+[aria-invalid='true'] {
+  border-color: light-dark(#c62828, #ef9a9a);
+}
+
+.yardim {
+  font-size: 0.8125rem;
+  color: var(--soluk);
+}
+
+.yardim p {
+  margin: 4px 0 0;
+}
+
 :is(input, select, textarea, button):focus-visible {
   outline: 2px solid var(--vurgu);
   outline-offset: 1px;

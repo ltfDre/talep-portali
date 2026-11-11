@@ -3,8 +3,8 @@ import Bulunamadi from './Bulunamadi.jsx'
 import ListeSayfasi from './ListeSayfasi.jsx'
 import TalepDetayi from './TalepDetayi.jsx'
 
-// Veriyi her ekran kendisi API'den okur (src/api.js). Talep açma ve durum
-// değiştirme sonraki adımlarda API'ye bağlanacak.
+// Veriyi her ekran kendisi API'den okur (src/api.js). Talep açma formu liste
+// sayfasındadır (TalepFormu). Durum değiştirme sonraki adımda API'ye bağlanacak.
 export default function App() {
   return (
     <main className="sayfa">

@@ -33,11 +33,36 @@ function hataCevir(durumKodu, govde) {
   })
 }
 
+// Sunucunun hata alan adları → arayüzün form alanı adları. Listede olmayan
+// anahtarlar olduğu gibi kalır (ör. "Bu alan kabul edilmiyor." hataları).
+const ALAN_ADLARI = {
+  baslik: 'baslik',
+  aciklama: 'aciklama',
+  kategori_id: 'kategoriId',
+  oncelik: 'oncelik',
+}
+
+function alanlariCevir(alanlar) {
+  if (!alanlar) return null
+  return Object.fromEntries(
+    Object.entries(alanlar).map(([ad, mesaj]) => [ALAN_ADLARI[ad] ?? ad, mesaj]),
+  )
+}
+
 // İptal (AbortError) olduğu gibi fırlatılır; çağıran bileşen onu yok sayar.
-async function jsonGetir(yol, signal) {
+// istekGovdesi verilirse JSON olarak gönderilir.
+async function istek(yol, { yontem = 'GET', istekGovdesi, signal } = {}) {
+  const basliklar = { Accept: 'application/json' }
+  if (istekGovdesi !== undefined) basliklar['Content-Type'] = 'application/json'
+
   let yanit
   try {
-    yanit = await fetch(yol, { headers: { Accept: 'application/json' }, signal })
+    yanit = await fetch(yol, {
+      method: yontem,
+      headers: basliklar,
+      body: istekGovdesi === undefined ? undefined : JSON.stringify(istekGovdesi),
+      signal,
+    })
   } catch (hata) {
     if (hata?.name === 'AbortError') throw hata
     throw new ApiHatasi({ kod: 'AG_HATASI', mesaj: AG_HATASI_MESAJI })
@@ -76,7 +101,7 @@ export async function talepleriGetir({ durum, oncelik } = {}, signal) {
   if (oncelik) sorgu.set('oncelik', oncelik)
   const ek = sorgu.size > 0 ? `?${sorgu}` : ''
 
-  const { talepler, sayfalama } = await jsonGetir(`/api/talepler${ek}`, signal)
+  const { talepler, sayfalama } = await istek(`/api/talepler${ek}`, { signal })
   return {
     talepler: talepler.map(talepCevir),
     sayfaBoyutu: sayfalama.sayfa_boyutu,
@@ -87,6 +112,36 @@ export async function talepleriGetir({ durum, oncelik } = {}, signal) {
 
 // Yanıtlar ve geçmiş bu adımda ekranda gösterilmediği için döndürülmez.
 export async function talepGetir(id, signal) {
-  const { talep } = await jsonGetir(`/api/talepler/${encodeURIComponent(id)}`, signal)
+  const { talep } = await istek(`/api/talepler/${encodeURIComponent(id)}`, { signal })
   return talepCevir(talep)
+}
+
+function kategoriCevir(ham) {
+  return {
+    id: ham.kategori_id,
+    ad: ham.kategori_adi,
+    yardimMetni: ham.yardim_metni ?? '',
+    birimAdi: ham.birim_adi,
+  }
+}
+
+export async function kategorileriGetir(signal) {
+  const { kategoriler } = await istek('/api/kategoriler', { signal })
+  return kategoriler.map(kategoriCevir)
+}
+
+// Talebi açan kişi gövdede gönderilmez; sunucu geçerli kullanıcıyı kendisi bilir.
+// signal yok: sayfadan çıkılsa da istek iptal edilmez, iptal sunucudaki kaydı geri almaz.
+// Hata alanları arayüz adlarıyla döner (kategori_id → kategoriId).
+export async function talepOlustur({ baslik, aciklama, kategoriId, oncelik }) {
+  try {
+    const { talep } = await istek('/api/talepler', {
+      yontem: 'POST',
+      istekGovdesi: { baslik, aciklama, kategori_id: Number(kategoriId), oncelik },
+    })
+    return talepCevir(talep)
+  } catch (hata) {
+    if (hata instanceof ApiHatasi) hata.alanlar = alanlariCevir(hata.alanlar)
+    throw hata
+  }
 }
