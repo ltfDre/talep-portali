@@ -81,3 +81,7 @@ CREATE TABLE IF NOT EXISTS eposta_kuyrugu (
   son_hata TEXT,
   olusturma TEXT NOT NULL
 );
+
+-- Kuyruk işleyicisi her turda gönderim zamanı gelmiş bekleyen kayıtları arar
+-- (server/bildirimIsleyici.js).
+CREATE INDEX IF NOT EXISTS ix_eposta_kuyrugu_bekleyen ON eposta_kuyrugu (durum, sonraki_deneme);

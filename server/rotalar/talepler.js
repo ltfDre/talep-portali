@@ -8,6 +8,7 @@ import {
   talepListesiSemasi,
   yeniTalepSemasi,
 } from '../dogrulama/talepler.js'
+import { durumDegistiBildirimi, talepAcildiBildirimi } from '../bildirimler.js'
 import {
   ApiHatasi,
   bulunamadi,
@@ -167,6 +168,8 @@ const talepAc = db.transaction((kullaniciId, { baslik, aciklama, kategori_id, on
   )
   const talepId = Number(lastInsertRowid)
   sorgular.gecmiseEkle.run(talepId, kullaniciId, zaman)
+  // Aynı transaction: talep kaydedilip bildirim kaybolmaz, ya da tersi olmaz.
+  talepAcildiBildirimi(talepId, zaman)
   return talepDetayi(talepId, kullaniciId)
 })
 
@@ -204,6 +207,8 @@ const durumDegistir = db.transaction((kullaniciId, talepId, { durum, surum }) =>
   if (changes !== 1) throw cakisma()
 
   sorgular.durumGecmiseEkle.run(talepId, kullaniciId, satir.durum, yeni.durum, zaman)
+  // Aynı transaction (SPEC Bölüm 4: her geçişte talebi açana bildirim kuyruğa alınır).
+  durumDegistiBildirimi(talepId, satir.durum, zaman)
   return talepDetayi(talepId, kullaniciId)
 })
 
