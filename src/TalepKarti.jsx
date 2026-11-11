@@ -15,7 +15,7 @@ export default function TalepKarti({ talep }) {
         </h3>
         {talep.aciklama && <p className="aciklama">{talep.aciklama}</p>}
         <p className="bilgi">
-          {talep.talepEden} · {talep.oncelik} öncelik · {tarihYaz(talep.olusturma)}
+          {talep.kategoriAdi} · {talep.oncelik} öncelik · {tarihYaz(talep.olusturma)}
         </p>
       </div>
       <span className="durum">{talep.durum}</span>

@@ -222,6 +222,19 @@ a {
   color: var(--soluk);
 }
 
+.hata {
+  border-color: light-dark(#c62828, #ef9a9a);
+  color: light-dark(#b71c1c, #ffcdd2);
+}
+
+.hata > :first-child {
+  margin-top: 0;
+}
+
+.hata > :last-child {
+  margin-bottom: 0;
+}
+
 @media (max-width: 520px) {
   .form,
   .filtreler {

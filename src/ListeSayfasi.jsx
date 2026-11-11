@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { talepleriGetir } from './api.js'
+import HataKutusu from './HataKutusu.jsx'
 import { DURUMLAR, FILTRE_ONCELIKLERI } from './sabitler.js'
 import TalepFiltreleri from './TalepFiltreleri.jsx'
-import TalepFormu from './TalepFormu.jsx'
 import TalepKarti from './TalepKarti.jsx'
 
 function filtreleriOku(parametreler) {
@@ -13,15 +15,32 @@ function filtreleriOku(parametreler) {
   }
 }
 
-export default function ListeSayfasi({ talepler, onEkle }) {
+// Yalnızca ilk sayfa okunur; toplam, sayfa boyutunu aşarsa gösterge çıkar.
+export default function ListeSayfasi() {
   const [parametreler, setParametreler] = useSearchParams()
   const filtreler = filtreleriOku(parametreler)
+  const [sonuc, setSonuc] = useState(null)
+  const [hata, setHata] = useState(null)
 
-  const gorunenTalepler = talepler.filter(
-    (talep) =>
-      (!filtreler.durum || talep.durum === filtreler.durum) &&
-      (!filtreler.oncelik || talep.oncelik === filtreler.oncelik),
-  )
+  // Bağımlılık searchParams nesnesi değil, ondan okunan metinlerdir (nesne değiştirilebilir).
+  useEffect(() => {
+    const denetleyici = new AbortController()
+    setSonuc(null)
+    setHata(null)
+    talepleriGetir(
+      { durum: filtreler.durum, oncelik: filtreler.oncelik },
+      denetleyici.signal,
+    ).then(
+      (veri) => {
+        if (!denetleyici.signal.aborted) setSonuc(veri)
+      },
+      (hata) => {
+        if (!denetleyici.signal.aborted) setHata(hata)
+      },
+    )
+    return () => denetleyici.abort()
+  }, [filtreler.durum, filtreler.oncelik])
+
   const filtreliMi = Boolean(filtreler.durum || filtreler.oncelik)
 
   function filtreGuncelle(event) {
@@ -40,28 +59,47 @@ export default function ListeSayfasi({ talepler, onEkle }) {
     )
   }
 
+  let icerik
+  if (hata) {
+    icerik = <HataKutusu hata={hata} />
+  } else if (!sonuc) {
+    icerik = (
+      <p className="kart bos" aria-live="polite">
+        Yükleniyor…
+      </p>
+    )
+  } else if (sonuc.talepler.length === 0) {
+    icerik = (
+      <p className="kart bos">
+        {filtreliMi ? 'Seçili filtrelere uyan talep yok.' : 'Henüz talep yok.'}
+      </p>
+    )
+  } else {
+    icerik = (
+      <>
+        <ul className="liste">
+          {sonuc.talepler.map((talep) => (
+            <TalepKarti key={talep.id} talep={talep} />
+          ))}
+        </ul>
+        {sonuc.toplamSayfa > 1 && (
+          <p className="bilgi">
+            İlk {sonuc.sayfaBoyutu} talep gösteriliyor (toplam {sonuc.toplamKayit}). Filtreleri
+            daraltarak arayabilirsiniz.
+          </p>
+        )}
+      </>
+    )
+  }
+
   return (
     <>
       <h1>IT Destek Talepleri</h1>
 
-      <TalepFormu onEkle={onEkle} />
-
       <section>
-        <h2>
-          Talepler ({filtreliMi ? `${gorunenTalepler.length} / ${talepler.length}` : talepler.length})
-        </h2>
+        <h2>Talepler{sonuc ? ` (${sonuc.toplamKayit})` : ''}</h2>
         <TalepFiltreleri filtreler={filtreler} onDegistir={filtreGuncelle} />
-        {talepler.length === 0 ? (
-          <p className="kart bos">Henüz talep yok. İlk talebi yukarıdaki formdan ekleyin.</p>
-        ) : gorunenTalepler.length === 0 ? (
-          <p className="kart bos">Seçili filtrelere uyan talep yok.</p>
-        ) : (
-          <ul className="liste">
-            {gorunenTalepler.map((talep) => (
-              <TalepKarti key={talep.id} talep={talep} />
-            ))}
-          </ul>
-        )}
+        {icerik}
       </section>
     </>
   )
