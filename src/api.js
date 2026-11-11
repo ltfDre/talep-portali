@@ -92,6 +92,8 @@ function talepCevir(ham) {
     cozulmeTarihi: ham.cozulme_tarihi ?? null,
     talepEden: ham.acan?.ad_soyad ?? '',
     kategoriAdi: ham.kategori_adi,
+    // Durum değiştirirken sunucuya geri gönderilir (eşzamanlı güncelleme denetimi).
+    surum: ham.surum,
   }
 }
 
@@ -113,6 +115,16 @@ export async function talepleriGetir({ durum, oncelik } = {}, signal) {
 // Yanıtlar ve geçmiş bu adımda ekranda gösterilmediği için döndürülmez.
 export async function talepGetir(id, signal) {
   const { talep } = await istek(`/api/talepler/${encodeURIComponent(id)}`, { signal })
+  return talepCevir(talep)
+}
+
+// surum, talebin ekrandaki hâlinin sürümüdür; eskiyse sunucu 409 CAKISMA döner.
+// signal yok: iptal, sunucuda yapılmış değişikliği geri almaz.
+export async function durumDegistir(id, { durum, surum }) {
+  const { talep } = await istek(`/api/talepler/${encodeURIComponent(id)}/durum`, {
+    yontem: 'PATCH',
+    istekGovdesi: { durum, surum },
+  })
   return talepCevir(talep)
 }
 

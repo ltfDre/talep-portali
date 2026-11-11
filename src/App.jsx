@@ -4,7 +4,7 @@ import ListeSayfasi from './ListeSayfasi.jsx'
 import TalepDetayi from './TalepDetayi.jsx'
 
 // Veriyi her ekran kendisi API'den okur (src/api.js). Talep açma formu liste
-// sayfasındadır (TalepFormu). Durum değiştirme sonraki adımda API'ye bağlanacak.
+// sayfasındadır (TalepFormu), durum değiştirme detay ekranındadır (TalepDetayi).
 export default function App() {
   return (
     <main className="sayfa">
