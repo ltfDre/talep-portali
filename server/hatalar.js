@@ -26,6 +26,14 @@ export function cakisma() {
   )
 }
 
+export function tekrar() {
+  return new ApiHatasi(
+    409,
+    'TEKRAR',
+    'Bu başlıkla az önce bir talep açtınız. Talep listenizi kontrol edin.',
+  )
+}
+
 export function gecersizGecis(eskiDurum, yeniDurum) {
   return new ApiHatasi(
     409,

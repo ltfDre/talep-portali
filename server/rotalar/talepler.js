@@ -15,12 +15,15 @@ import {
   cakisma,
   dogrulamaHatasi,
   gecersizGecis,
+  tekrar,
   yetkiYok,
 } from '../hatalar.js'
 import { GELISTIRME_OID } from '../tohum.js'
 import { db } from '../veritabani.js'
 
 export const talepRotalari = Router()
+
+const TEKRAR_PENCERESI_MS = 600_000
 
 const TALEP_ALANLARI = `
   t.id, t.baslik, t.oncelik, t.durum,
@@ -68,6 +71,12 @@ const sorgular = {
     WHERE g.talep_id = ?
     ORDER BY g.olusturma, g.id`),
   aktifKategori: db.prepare('SELECT id, birim_id FROM kategoriler WHERE id = ? AND aktif = 1'),
+  // baslik doğrulamada NFC + trim edilip öyle yazılır; birebir karşılaştırma yeterli.
+  // olusturma toISOString biçimindedir; metin sırası zaman sırasıyla aynıdır.
+  tekrarTalep: db.prepare(`
+    SELECT 1 FROM talepler
+    WHERE acan_kullanici_id = ? AND baslik = ? AND olusturma > ?
+    LIMIT 1`),
   talepEkle: db.prepare(`
     INSERT INTO talepler
       (baslik, aciklama, kategori_id, birim_id, oncelik, acan_kullanici_id, olusturma, guncelleme)
@@ -155,7 +164,12 @@ const talepAc = db.transaction((kullaniciId, { baslik, aciklama, kategori_id, on
     })
   }
 
-  const zaman = new Date().toISOString()
+  // Çift gönderim: aynı kullanıcı, aynı başlık, son 60 sn → hiçbir şey yazılmadan 409.
+  const simdi = Date.now()
+  const esik = new Date(simdi - TEKRAR_PENCERESI_MS).toISOString()
+  if (sorgular.tekrarTalep.get(kullaniciId, baslik, esik)) throw tekrar()
+
+  const zaman = new Date(simdi).toISOString()
   const { lastInsertRowid } = sorgular.talepEkle.run(
     baslik,
     aciklama,

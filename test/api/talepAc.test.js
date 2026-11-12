@@ -1,6 +1,8 @@
 // POST /api/talepler: doğrulama ve bildirim kuyruğunun aynı transaction'da yazılması.
 import {
   anlikGoruntu,
+  baskasininTalebi,
+  db,
   gecerliTalep,
   satirSayilari,
   sunucuyuBaslat,
@@ -68,4 +70,68 @@ test('geçersiz gövde 500 değil alanlı 400 DOGRULAMA döner ve hiçbir şey y
   const sinir = await api.istek('POST', '/api/talepler', gecerliTalep({ baslik: emoji.repeat(200) }))
   assert.equal(sinir.durum, 201)
   assert.equal(sinir.govde.talep.baslik, emoji.repeat(200))
+})
+
+// Tekrar penceresi: aynı kullanıcı, aynı başlık, 60 sn (SPEC Bölüm 8 dışı, ayrı istek).
+function geriTarihle(talepId, saniye) {
+  const zaman = new Date(Date.now() - saniye * 1000).toISOString()
+  db.prepare('UPDATE talepler SET olusturma = ? WHERE id = ?').run(zaman, talepId)
+}
+
+test('aynı başlıkla 60 sn içinde ikinci talep 409 TEKRAR döner ve hiçbir şey yazmaz', async () => {
+  const govde = gecerliTalep({ baslik: 'Tekrar: VPN bağlanmıyor' })
+  const ilk = await api.istek('POST', '/api/talepler', govde)
+  assert.equal(ilk.durum, 201)
+
+  const once = anlikGoruntu()
+  const ikinci = await api.istek('POST', '/api/talepler', govde)
+  assert.equal(ikinci.durum, 409)
+  assert.equal(ikinci.govde.hata.kod, 'TEKRAR')
+  assert.equal(typeof ikinci.govde.hata.mesaj, 'string')
+  assert.equal(ikinci.govde.hata.alanlar, undefined)
+  assert.deepEqual(anlikGoruntu(), once, 'talep, geçmiş veya kuyruk satırı yazılmamalı')
+})
+
+test('başlık NFC ve baş/son boşluk temizlenerek karşılaştırılır', async () => {
+  const baslik = 'Tekrar: Güç kaynağı şişti, ağ çöktü'
+  assert.notEqual(baslik.normalize('NFD'), baslik, 'başlık ayrıştırılabilir harf içermeli')
+
+  const ilk = await api.istek('POST', '/api/talepler', gecerliTalep({ baslik }))
+  assert.equal(ilk.durum, 201)
+
+  const once = anlikGoruntu()
+  const ikinci = await api.istek(
+    'POST',
+    '/api/talepler',
+    gecerliTalep({ baslik: `  ${baslik.normalize('NFD')} \t` }),
+  )
+  assert.equal(ikinci.durum, 409)
+  assert.equal(ikinci.govde.hata.kod, 'TEKRAR')
+  assert.deepEqual(anlikGoruntu(), once)
+})
+
+test('tekrar penceresi 60 sn: 59 sn önceki talep engeller, 61 sn önceki engellemez', async () => {
+  const govde = gecerliTalep({ baslik: 'Tekrar: Pencere sınırı' })
+  const ilk = await api.istek('POST', '/api/talepler', govde)
+  assert.equal(ilk.durum, 201)
+
+  geriTarihle(ilk.govde.talep.id, 59)
+  const icinde = await api.istek('POST', '/api/talepler', govde)
+  assert.equal(icinde.durum, 409, '59 sn önce açılan talep tekrar sayılmalı')
+  assert.equal(icinde.govde.hata.kod, 'TEKRAR')
+
+  geriTarihle(ilk.govde.talep.id, 61)
+  const disinda = await api.istek('POST', '/api/talepler', govde)
+  assert.equal(disinda.durum, 201, '61 sn önce açılan talep tekrar sayılmamalı')
+})
+
+test('farklı başlık veya başka kullanıcının aynı başlığı engellenmez', async () => {
+  baskasininTalebi() // başlık 'Başkasının talebi', şimdi açıldı
+  const ayniBaslik = await api.istek('POST', '/api/talepler', gecerliTalep({ baslik: 'Başkasının talebi' }))
+  assert.equal(ayniBaslik.durum, 201, 'başka kullanıcının talebi tekrar sayılmamalı')
+
+  const ilk = await api.istek('POST', '/api/talepler', gecerliTalep({ baslik: 'Tekrar: Ekran titriyor' }))
+  assert.equal(ilk.durum, 201)
+  const farkli = await api.istek('POST', '/api/talepler', gecerliTalep({ baslik: 'Tekrar: Ekran kararıyor' }))
+  assert.equal(farkli.durum, 201, 'farklı başlık tekrar sayılmamalı')
 })

@@ -44,7 +44,8 @@ export function tohumKategoriId() {
 
 export function gecerliTalep(alanlar = {}) {
   return {
-    baslik: 'Yazıcı çalışmıyor',
+    // Benzersiz: aynı başlıkla 60 sn içinde ikinci talep 409 TEKRAR alır.
+    baslik: benzersiz('Yazıcı çalışmıyor'),
     aciklama: 'Üçüncü kattaki yazıcı kâğıt sıkıştırıyor.',
     kategori_id: tohumKategoriId(),
     oncelik: 'Orta',
