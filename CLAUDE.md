@@ -11,7 +11,7 @@ Node ≥24, JavaScript (ESM). Arayüz: React 19.3, React Router 7.18, Vite 8.3. 
 - `npm run dev:web` / `npm run dev:api`: ayrı ayrı (ör. API'yi durdurup hata denemek için).
 - `npm run bildirim:sahte`: sahte bildirim servisi (127.0.0.1:4000); `.env`'de `BILDIRIM_*` açık olmalı.
 - `npm run build`: `dist/` üretir.
-- Test: node:test ile `npm test`
+- Test: node:test ile `npm test`; kapsam için `npm run test:kapsam`
 
 ## Klasörler
 - `src/`: arayüz. **fetch ve alan adı dönüşümü yalnızca `src/api.js`'de.** Rotalar: `/`, `/talepler/:id`, `*` (`App.jsx`).
