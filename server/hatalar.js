@@ -18,6 +18,11 @@ export function yetkiYok() {
   return new ApiHatasi(403, 'YETKI_YOK', 'Bu işlem için yetkiniz yok.')
 }
 
+// Host veya Origin izin listesinde değil (DNS rebinding koruması, server/uygulama.js).
+export function yasakIstek() {
+  return new ApiHatasi(403, 'YASAK_ISTEK', 'Bu istek kabul edilmedi.')
+}
+
 export function cakisma() {
   return new ApiHatasi(
     409,

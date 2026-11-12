@@ -34,7 +34,7 @@ export async function sunucuyuBaslat() {
     return new Promise((coz) => sunucu.close(() => coz()))
   }
 
-  return { istek, kapat }
+  return { istek, kapat, port }
 }
 
 // Tohumdaki geliştirme kullanıcısı ve "BT Destek" birimi/kategorisi.
