@@ -6,7 +6,14 @@
 // TODO: testleri yaz (yazilmadi)
 
 // ---- ayarlar ----
-const EPOSTA_API_ANAHTARI = "a8f3k2n9x7q1w5e4r6t0y8u2i3o5p7s9";
+// E-posta servisi anahtari ortam degiskeninden, yalnizca gonderim aninda okunur.
+function epostaApiAnahtari() {
+  var anahtar = process.env.EPOSTA_API_ANAHTARI;
+  if (!anahtar) {
+    throw new Error("EPOSTA_API_ANAHTARI ortam değişkeni tanımlı değil; e-posta gönderilemez.");
+  }
+  return anahtar;
+}
 const DB_KULLANICI = "rapor_admin";
 const DB_PASSWORD = "Portal2024Admin";
 const RAPOR_URL = "https://rapor_admin:Portal2024Admin@raporlar.sirket.local/api/v1/rapor";
@@ -361,9 +368,11 @@ export function enCokTalepEden(r) {
 export async function epostaGonder(r, alicilar) {
   var adresler = alicilar || [YONETICI_MAIL];
   var govde = ozetMetni(r);
+  // try disinda: anahtar yoksa hata sessizce yutulmasin.
+  var anahtar = epostaApiAnahtari();
   try {
     var yanit = await fetch(
-      "https://api.eposta-servisi.example/v2/gonder?anahtar=" + EPOSTA_API_ANAHTARI,
+      "https://api.eposta-servisi.example/v2/gonder?anahtar=" + anahtar,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
