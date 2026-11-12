@@ -276,8 +276,10 @@ Hata biçimi: `{ "hata": { "kod": "DOGRULAMA", "mesaj": "...", "alanlar": { "bas
 | Eksik veya geçersiz alan; başlıkta satır sonu | `400 DOGRULAMA` | Hata ilgili alanın altında gösterilir, girilen veriler korunur |
 | Oturum yok veya süresi dolmuş | `401 OTURUM_YOK` | Girişe yönlendirilir, ardından istenen sayfaya dönülür |
 | Rol yetkisi yok | `403 YETKI_YOK` | "Bu sayfaya erişim yetkiniz yok" gösterilir |
+| `Host` veya `Origin` başlığının alan adı izin listesinde değil (DNS rebinding koruması) | `403 YASAK_ISTEK` | Tüm `/api` isteklerinde, rotalardan önce denetlenir; mesaj "Bu istek kabul edilmedi." `Host` her istekte, `Origin` yalnızca gönderilmişse denetlenir. Port karşılaştırılmaz. İzinli adlar: `localhost`, `127.0.0.1`, `[::1]` ve `UYGULAMA_URL`'deki alan adı |
 | Talep yok veya görme yetkisi yok | `404 BULUNAMADI` | Bulunamadı ekranı gösterilir |
 | `surum` eski (iki kişi aynı anda güncelledi) | `409 CAKISMA` | Güncel talep yeniden yüklenir, kullanıcıya bildirilir |
+| Aynı kullanıcı birebir aynı başlıkla son 60 sn içinde yeniden talep açar (çift gönderim) | `409 TEKRAR` | Hiçbir şey yazılmaz; mesaj "Bu başlıkla az önce bir talep açtınız. Talep listenizi kontrol edin." Denetim kategori denetiminden sonra, talep açma işlemiyle aynı transaction'da yapılır |
 | İzinsiz durum geçişi | `409 GECERSIZ_GECIS` | Durum değişmez, mesaj gösterilir |
 | Pasif veya bulunmayan kategoriyle talep açma | `400 DOGRULAMA` | Kategori listesi yenilenir |
 | Son üyeyi çıkarma veya üyesiz birime aktif kategori bağlama | `409 BIRIM_UYESIZ` | Reddedilir; bir talebin kimsenin görmediği birime düşmesi engellenir |
@@ -292,10 +294,10 @@ Hata biçimi: `{ "hata": { "kod": "DOGRULAMA", "mesaj": "...", "alanlar": { "bas
 
 | Katman | Araç | Kapsam |
 |---|---|---|
-| Birim | Vitest | Durum geçişleri, ilk yanıt ve çözüm süresi hesapları, doğrulama şemaları, e-posta metinleri ve yeniden deneme aralığı |
-| API entegrasyon (ana katman) | Vitest + Supertest + geçici SQLite | Tüm uç noktalar, hata kodları, işlem bütünlüğü ve e-posta kuyruğu |
-| Arayüz bileşeni | Vitest + React Testing Library | Yalnızca form doğrulaması, kategori yardım metni, Acil kart görünümü, yetkiye göre gösterilen düğmeler |
-| Uçtan uca | Playwright | Az sayıda kritik akış (aşağıda) |
+| Birim | `node:test` + `node:assert` | Durum geçişleri, ilk yanıt ve çözüm süresi hesapları, doğrulama şemaları, e-posta metinleri ve yeniden deneme aralığı |
+| API entegrasyon (ana katman) | `node:test`; sunucu `uygulama.listen(0, '127.0.0.1')` ile rastgele portta açılır, istekler yerleşik `fetch` ile atılır; veritabanı `VERITABANI_YOLU=:memory:` | Tüm uç noktalar, hata kodları, işlem bütünlüğü ve e-posta kuyruğu |
+| Arayüz bileşeni (henüz yok) | Vitest + React Testing Library | Yalnızca form doğrulaması, kategori yardım metni, Acil kart görünümü, yetkiye göre gösterilen düğmeler |
+| Uçtan uca (henüz yok) | Playwright | Az sayıda kritik akış (aşağıda) |
 | Elle (pilot) | Gerçek ortam | Gerçek Entra girişi, gerçek SMTP rölesi, yedekten geri dönüş |
 
 ### Öncelikli senaryolar
@@ -314,11 +316,12 @@ Hata biçimi: `{ "hata": { "kod": "DOGRULAMA", "mesaj": "...", "alanlar": { "bas
 
 ### Test ortamı
 
-- **Giriş:** Testlerde Entra yerine yalnızca `NODE_ENV=test` iken yüklenen sahte giriş ara katmanı kullanılır; üretimde bu kodun yüklenmediği de ayrı bir testle doğrulanır.
-- **E-posta:** Nodemailer yerine belleğe yazan bir taşıyıcı kullanılır.
-- **Veri:** Her test dosyası kendi geçici veritabanını kullanır.
+- **Giriş (hedef, henüz yok):** Testlerde Entra yerine yalnızca `NODE_ENV=test` iken yüklenen sahte giriş ara katmanı kullanılır; üretimde bu kodun yüklenmediği de ayrı bir testle doğrulanır.
+- **E-posta (hedef, henüz yok):** Nodemailer yerine belleğe yazan bir taşıyıcı kullanılır.
+- **Veri:** `node --test` her test dosyasını ayrı süreçte çalıştırır; `test/ortam.js` `VERITABANI_YOLU=:memory:` ayarladığı için her dosyanın kendi bellek içi veritabanı olur, `veri/talep.db`'ye dokunulmaz.
+- **Ortam:** `test/ortam.js` sunucu modüllerinden önce yüklenir, `NODE_ENV=test` ayarlar ve `PORT`, `UYGULAMA_URL`, `BILDIRIM_*` değişkenlerini siler; `.env` yüklenmez. Bildirim işleyicisi başlatılmaz (yalnızca `server/index.js` başlatır).
 - **Hedef:** Yüzde hedefi yerine, yetki matrisi ve durum geçişlerindeki her satırın test edilmesi şart koşulur.
-- **Komut:** `npm test` tüm otomatik testleri çalıştırır.
+- **Komut:** `npm test`, `test/**/*.test.js` ve `legacy/**/*.test.js` dosyalarını çalıştırır. `npm run test:kapsam`, `test/**/*.test.js` için `--experimental-test-coverage` ile kapsam raporu üretir (dahil: `server/**`, `src/durumGecisleri.js`; hariç: `server/index.js`).
 
 ## Açık soru
 
