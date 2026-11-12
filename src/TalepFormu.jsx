@@ -103,6 +103,8 @@ export default function TalepFormu() {
   function sunucuHatasiniGoster(hata) {
     if (hata.kod !== 'DOGRULAMA' || !hata.alanlar) {
       setGenelHata(hata)
+      // Çift gönderim: kullanıcı büyük olasılıkla başlığı değiştirecek.
+      if (hata.kod === 'TEKRAR') alanlar.baslik.current?.focus()
       return
     }
 
