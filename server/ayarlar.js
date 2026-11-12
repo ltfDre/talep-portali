@@ -67,7 +67,8 @@ function ayarlariOku() {
     sorunlar.push('BILDIRIM_ADRESI: BILDIRIM_ANAHTARI verildiğinde bu da verilmeli')
   }
 
-  // Üretimde e-posta bağlantıları ve Origin denetimi UYGULAMA_URL'ye dayanır,
+  // Üretimde e-posta bağlantıları UYGULAMA_URL'ye dayanır; Host/Origin denetimi de
+  // (server/uygulama.js) localhost dışında yalnızca onun hostname'ine izin verir,
   // bildirimsiz çalışmak da SPEC'teki "her gelişmede e-posta" kuralını bozar.
   if (uretim) {
     if (!oku('UYGULAMA_URL')) sorunlar.push('UYGULAMA_URL: üretimde zorunludur')
