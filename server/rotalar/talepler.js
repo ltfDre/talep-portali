@@ -23,7 +23,7 @@ import { db } from '../veritabani.js'
 
 export const talepRotalari = Router()
 
-const TEKRAR_PENCERESI_MS = 600_000
+const TEKRAR_PENCERESI_MS = 60_000
 
 const TALEP_ALANLARI = `
   t.id, t.baslik, t.oncelik, t.durum,
