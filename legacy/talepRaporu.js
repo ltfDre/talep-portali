@@ -6,17 +6,32 @@
 // TODO: testleri yaz (yazilmadi)
 
 // ---- ayarlar ----
-// E-posta servisi anahtari ortam degiskeninden, yalnizca gonderim aninda okunur.
-function epostaApiAnahtari() {
-  var anahtar = process.env.EPOSTA_API_ANAHTARI;
-  if (!anahtar) {
-    throw new Error("EPOSTA_API_ANAHTARI ortam değişkeni tanımlı değil; e-posta gönderilemez.");
+// Gizli degerler ortam degiskenlerinden, yalnizca kullanildiklari anda okunur.
+// Tanimsiz ya da bossa hata firlatilir; mesajda yalnizca degiskenin adi yer alir.
+function ortamDegeri(ad) {
+  var deger = process.env[ad];
+  if (deger === undefined || deger.trim() === "") {
+    throw new Error(ad + " ortam değişkeni tanımlı değil veya boş.");
   }
-  return anahtar;
+  return deger;
 }
-const DB_KULLANICI = "rapor_admin";
-const DB_PASSWORD = "Portal2024Admin";
-const RAPOR_URL = "https://rapor_admin:Portal2024Admin@raporlar.sirket.local/api/v1/rapor";
+
+function epostaApiAnahtari() {
+  return ortamDegeri("EPOSTA_API_ANAHTARI");
+}
+
+function legacyDbKullanici() {
+  return ortamDegeri("LEGACY_DB_KULLANICI");
+}
+
+function legacyDbParola() {
+  return ortamDegeri("LEGACY_DB_PAROLA");
+}
+
+// Bicim: https://kullanici:parola@sunucu/yol
+function legacyRaporUrl() {
+  return ortamDegeri("LEGACY_RAPOR_URL");
+}
 const YONETICI_MAIL = "bt.mudur@sirket.local";
 
 // ---- sabitler ----
@@ -80,8 +95,11 @@ var son_birim = "";
 
 const db = {
   baglan: function () {
-    // eski baglanti kodu, simdilik log
-    console.log("baglanti: " + DB_KULLANICI + ":" + DB_PASSWORD + "@db.sirket.local");
+    // eski baglanti kodu, simdilik log. Parola eksik ayari erken yakalamak icin
+    // okunur ama hicbir yere yazilmaz.
+    var kullanici = legacyDbKullanici();
+    legacyDbParola();
+    console.log("baglanti: " + kullanici + ":***@db.sirket.local");
   },
   calistir: function (s) {
     console.log("SQL> " + s);
@@ -412,8 +430,10 @@ export function birimRaporunuSil(birim) {
 }
 
 export async function raporuGonder(r) {
+  // try disinda: adres yoksa hata sessizce yutulmasin.
+  var url = legacyRaporUrl();
   try {
-    var yanit = await fetch(RAPOR_URL, {
+    var yanit = await fetch(url, {
       method: "POST",
       body: JSON.stringify(r),
     });
