@@ -1,0 +1,37 @@
+# Katkı Rehberi
+
+Bu belge insan katkıcılar içindir. Kodlama ajanının kuralları `CLAUDE.md`'dedir; iki belge birbirini tamamlar.
+
+## 1. Dal ve commit
+
+- Dal adları ön ekle başlar: `feature/`, `fix/`, `docs/` (ör. `feature/tekrar-talep-mesaji`).
+- Commit mesajları Türkçe, tek satır ve Conventional Commits biçimindedir: `tür(kapsam): açıklama` (ör. `fix(api): TEKRAR penceresi 60 sn olmalı`). Türler, ör.: `feat`, `fix`, `docs`, `test`, `chore`, `refactor`, `merge`.
+- `main`'e doğrudan push yapılmaz, PR zorunludur (GitHub ruleset ile zorunlu kılınmıştır). Ruleset ayrıca `main`'in silinmesini ve force push'u engeller.
+- Hiçbir dalda force push ve `git reset --hard` kullanılmaz.
+
+## 2. PR kuralları
+
+- Bir PR en fazla **400 değişen satır** içerir (`package-lock.json` hariç). Büyük işler parçalara bölünür.
+- PR açıklamasında şu başlıklar bulunur:
+  1. **Özet**
+  2. **Değişen dosyalar**
+  3. **Nasıl test edildi**: yalnızca gerçekten çalıştırılanlar (`npm test`, `npm run build`, elle deneme adımları). Çalıştırılmayan şey yazılmaz.
+  4. **Riskler**
+  5. **Ajanın yaptığı / insanın doğruladığı**
+- CI henüz yok. Testler ve taramalar PR'ı açan kişi tarafından yerelde çalıştırılır, çıktısı PR'a özetlenir.
+
+## 3. AI kullanım anlaşması
+
+1. **Beyan:** AI ile üretilen kod, PR açıklamasının "Ajanın yaptığı / insanın doğruladığı" bölümünde belirtilir.
+2. **Okumadan commit yok:** Ajan çıktısı, bir insan `git diff`'i okumadan commit edilmez. Commit'i ve push'u insan yapar; ajan commit atmaz, dal açmaz, push yapmaz.
+   > Not: Bu kural `CLAUDE.md`'den gelir ve teknik olarak engellenmez. `.claude/settings.json` yalnızca force push ve `git reset --hard`'ı reddeder; sıradan `git commit` ve `git push` ajana açıktır. Uyulduğunu insan denetler.
+3. **Merge şartı:** Merge öncesi `npm test` ve `gitleaks git --log-opts="main..HEAD" --redact --no-banner .` temiz geçer. Gitleaks yalnızca PR'ın değişikliklerini tarar; tüm geçmiş taranmaz, çünkü geçmişte bilerek bırakılmış sahte bir anahtar var. Yalnızca `.md` dosyaları değişen PR'larda `npm test` gerekmez, gitleaks yeterlidir.
+4. **Güvenlik koduna iki onay:** Kimlik/yetki, Host/Origin denetimi (`server/uygulama.js`), hata yanıtları (`server/hatalar.js`), SQL sorguları, gizli değer kullanan kod ve `.claude/settings.json` değişikliklerinde PR yazarı dışında iki kişi GitHub'da Approve verir. Kapsam PR yazarı tarafından açıklamada işaretlenir, inceleyen ekleyebilir. GitHub ruleset onay zorlamaz; bu ekip anlaşmasıdır. Ekipte yeterli kişi yoksa bu madde ekip tarafından yazılı olarak değiştirilir.
+5. **Prompt'a hassas veri yok:** Prompt'lara sır (anahtar, parola, `.env` içeriği), müşteri verisi veya gerçek kişisel veri girilmez. Örneklerde sahte veri kullanılır (ör. `gelistirici@ornek.invalid`).
+6. **Beyan değil kanıt:** Ajanın "yaptım", "düzelttim", "testler geçti" beyanı, ilgili komut çalıştırılıp çıktısı görülerek doğrulanır.
+
+## 4. Merge conflict
+
+- Ajan çakışma için çözüm ve gerekçesini önerebilir, onayla dosyayı düzeltebilir.
+- İnsan sonucu `git diff` ile okur ve `<<<<<<<`, `=======`, `>>>>>>>` işaretlerinin kalmadığını kontrol eder.
+- `git add` ve commit'i insan yapar; ardından `npm test` çalıştırılır.
